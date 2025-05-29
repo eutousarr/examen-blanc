@@ -17,6 +17,9 @@ datasource db {
 model Post {
     id        Int      @id @default(autoincrement())
     name      String
+    slug      String   @unique
+    content   String?  @db.Text
+    published Boolean  @default(false)    
     createdAt DateTime @default(now())
     updatedAt DateTime @updatedAt
 
@@ -71,4 +74,161 @@ model VerificationToken {
     expires    DateTime
 
     @@unique([identifier, token])
+}
+
+model Candidat {
+    id               Int           @id @default(autoincrement())
+    numero           Int           @unique
+    prenoms          String        @db.VarChar(255)
+    nom              String        @db.VarChar(255)
+    date_naissance   DateTime      @db.Date
+    lieu_naissance   String        @db.VarChar(255)
+    sexe             String        @default("MASCULIN") @db.VarChar(255)
+    aptitude         String        @default("Apte") @db.VarChar(255)
+    section          String        @default("Moderne") @db.VarChar(255)
+    option           String        @default("ESPAGNOL") @db.VarChar(255)
+    etat             Boolean       @default(true)
+    etablissement_id Int
+    etablissement    Etablissement @relation(fields: [etablissement_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "candidats_etablissement_id_foreign")
+    notes            Note[]
+    resultats        Resultat[]
+    Anonymat         Anonymat?
+    mark             Mark?
+}
+
+model Anonymat {
+    id         Int      @id @default(autoincrement())
+    code       String   @unique(map: "anonymat_code_unique") @db.VarChar(255)
+    candidatId Int      @unique // relation scalar field (used in the `@relation` attribute above)
+    candidat   Candidat @relation(fields: [candidatId], references: [id])
+}
+
+model Zone {
+    id             Int             @id @default(autoincrement())
+    name           String
+    slug           String
+    responsable    String
+    contact        String
+    centres        Centre[]
+    etablissements Etablissement[]
+}
+
+model Centre {
+    id      Int     @id @default(autoincrement())
+    name    String?
+    slug    String?
+    contact String?
+    zoneId  Int
+    zone    Zone    @relation(fields: [zoneId], references: [id])
+    jurys   Jury[]
+}
+
+model Etablissement {
+    id        Int        @id @default(autoincrement())
+    name      String     @db.VarChar(255)
+    slug      String     @unique(map: "etablissements_slug_unique") @db.VarChar(255)
+    zoneId    Int
+    zone      Zone       @relation(fields: [zoneId], references: [id])
+    candidats Candidat[]
+}
+
+model Groupe {
+    id    Int    @id @default(autoincrement())
+    name  String @db.VarChar(255)
+    slug  String @db.VarChar(255)
+    total Float  @default(0)
+}
+
+model Jury {
+    id        Int     @id @default(autoincrement())
+    numero    Int
+    centre_id Int?
+    president String?
+    centre    Centre? @relation(fields: [centre_id], references: [id], onDelete: NoAction, map: "jurys_centre__id_foreign")
+}
+
+model Matiere {
+    id          Int     @id @default(autoincrement())
+    name        String? @unique(map: "matieres_name_unique") @db.VarChar(255)
+    slug        Int?
+    coefficient Int
+    notes       Note[]
+}
+
+model Note {
+    id          Int      @id @default(autoincrement())
+    candidat_id Int
+    matiere_id  Int
+    score       Float    @default(0)
+    groupe_id   Int
+    candidat    Candidat @relation(fields: [candidat_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "notes_candidat_id_foreign")
+    matiere     Matiere  @relation(fields: [matiere_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "notes_matiere_id_foreign")
+}
+
+model Resultat {
+    id          Int      @id @default(autoincrement())
+    candidat_id Int
+    total       Float?   @default(0)
+    moyenne     Float?   @default(0)
+    rang        Int?
+    candidat    Candidat @relation(fields: [candidat_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "resultats_candidat_id_foreign")
+}
+
+model Mark {
+    id            Int      @id @default(autoincrement())
+    candidatId    Int      @unique
+    candidat      Candidat @relation(fields: [candidatId], references: [id])
+    numcorrection String   @unique
+    red           Float    @default(0)
+    dic           Float    @default(0)
+    tsq           Float    @default(0)
+    svt           Float    @default(0)
+    lv1           Float    @default(0)
+    mat           Float    @default(0)
+    hg            Float    @default(0)
+    ec            Float    @default(0)
+    sp            Float    @default(0)
+    part          Float    @default(0)
+    orale         Float    @default(0)
+}
+
+enum Aptitude {
+    APTE
+    INAPTE
+}
+
+enum EpOptionnel {
+    ESPAGNOL
+    ALLEMAND
+    ITALIEN
+    ARABE
+    PORTUGAIS
+    RUSSE
+    TECHNOLOGIE
+    ECONOMIE_FAMILIALE
+}
+
+enum Gender {
+    MASCULIN
+    FEMININ
+}
+
+enum PresenceType {
+    PRESENT
+    ABSENT
+}
+
+enum Statut {
+    PU
+    PR
+    CL
+}
+
+enum TypeEtablissement {
+    COLLEGE
+    LYCEE
+    MIXTE_LYCEE_COLLEGE
+    COLLEGE_PRIVE
+    COLLEGE_PRIVE_MIXTE
+    LYCEE_PRIVE_MIXTE
 }
