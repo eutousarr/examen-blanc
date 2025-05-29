@@ -1,18 +1,15 @@
-import { z } from "zod";
+// import { z } from "zod";
 
 import { createTRPCRouter, publicProcedure, protectedProcedure } from "../trpc";
 
-export const exampleRouter = createTRPCRouter({
+export const zoneRouter = createTRPCRouter({
   hello: publicProcedure
-    .input(z.object({ text: z.string() }))
-    .query(({ input }) => {
-      return {
-        greeting: `Hello ${input.text}`,
-      };
-    }),
+    
+    .query(() =>{ return "Les zones de l'IEF"}),
+    
 
   getAll: publicProcedure.query(({ ctx }) => {
-    return ctx.prisma.example.findMany();
+    return ctx.prisma.zone.findMany();
   }),
 
   getSecretMessage: protectedProcedure.query(() => {
